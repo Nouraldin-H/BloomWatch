@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloomWatch: Global Plant Blooming Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Add Leaflet CSS for maps (copy this line) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+</head>
+<body>
+    <header>
+        <h1>BloomWatch: Explore the plannet by tracking blooms!</h1>
+        <p>Monitor plant blooms using NASA data</p>
+    </header>
+    <main>
+        <section id="controls">
+            <input type="text" id="location-search" placeholder="Search location (e.g., New York)">
+            <button id="search-btn">Search</button>
+        </section>
+        <section id="map-container"></section> <!-- Map will go here -->
+        <section id="timeline">
+            <label for="date-slider">Select Date Range:</label>
+            <input type="range" id="date-slider" min="2020" max="2025" value="2025">
+            <span id="selected-year">2025</span>
+        </section>
+        <section id="info-panel">
+            <h2>Bloom Details</h2>
+            <p id="bloom-info">Click on the map for details...</p>
+        </section>
+    </main>
+    <!-- Add Leaflet JS for maps (copy this line) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="script.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>

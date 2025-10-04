@@ -1,0 +1,5 @@
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+header { background: #003366; color: white; padding: 10px; text-align: center; }
+#map-container { height: 400px; width: 100%; }  /* Placeholder for map */
+#timeline { margin: 20px; }
+#info-panel { padding: 20px; border: 1px solid #ccc; }
