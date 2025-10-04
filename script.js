@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         infoPanel.textContent = `Clicked at latitude: ${e.latlng.lat}, longitude: ${e.latlng.lng}. Loading bloom data...`;
         // Later: Fetch NASA data for this location
     });
-    // Example: Fetch NASA imagery (replace DEMO_KEY with your key)
+    // Fetch NASA imagery (replace DEMO_KEY with your key)
 function fetchBloomData(lat, lon, year) {
     const apiKey = 'ZktDK0NIj2638lKwYDes68EbPyHZUbr4AL1Lkn7Q';
     const date = `${year}-05-01`; // Example spring date for blooms
