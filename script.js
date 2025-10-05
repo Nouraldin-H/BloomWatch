@@ -26,22 +26,38 @@ document.addEventListener('DOMContentLoaded', () => {
         infoPanel.textContent = `Clicked at latitude: ${e.latlng.lat}, longitude: ${e.latlng.lng}. Loading bloom data...`;
         // Later: Fetch NASA data for this location
     });
-    // Fetch NASA imagery (replace DEMO_KEY with your key)
+    // Example: Fetch NASA imagery (replace DEMO_KEY with your key)
 function fetchBloomData(lat, lon, year) {
     const apiKey = 'ZktDK0NIj2638lKwYDes68EbPyHZUbr4AL1Lkn7Q';
-    const date = `${year}-05-01`; // Example spring date for blooms
-    fetch(`https://api.nasa.gov/planetary/earth/imagery?lon=${lon}&lat=${lat}&date=${date}&dim=0.1&api_key=${apiKey}`)
-        .then(response => response.json())
+    const date = `${year}-05-01`;
+    const url = `https://api.nasa.gov/planetary/earth/imagery?lon=${lon}&lat=${lat}&date=${date}&dim=0.1&api_key=${apiKey}`;
+    
+    // Log URL for debugging
+    console.log('Fetching URL:', url);
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const infoPanel = document.getElementById('bloom-info');
+            console.log('API Response:', data); // Log response for debugging
             if (data.url) {
                 infoPanel.innerHTML = `<p>Bloom imagery for ${year}:</p><img src="${data.url}" alt="NASA Bloom Image" style="max-width:100%;">`;
-                // Add to map: L.imageOverlay(data.url, [[lat-0.05, lon-0.05], [lat+0.05, lon+0.05]]).addTo(map);
+                // Uncomment to overlay on map
+                // L.imageOverlay(data.url, [[lat-0.05, lon-0.05], [lat+0.05, lon+0.05]]).addTo(map);
             } else {
-                infoPanel.textContent = 'No data found. Try another location/date.';
+                infoPanel.textContent = 'No imagery found. Try another location or date.';
             }
         })
-        .catch(error => console.error('Error fetching data:', error));
+        .catch(error => {
+            const infoPanel = document.getElementById('bloom-info');
+            infoPanel.textContent = `Error fetching data: ${error.message}`;
+            console.error('Fetch Error:', error);
+        });
 }
 
 // Call it on map click
