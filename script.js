@@ -1,8 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize the map
-    const map = L.map('map-container').setView([0, 0], 2); // Center on world, zoom level 2
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+    const map = L.map('map-container').setView([0, 0], 2);
+
+    // Add MODIS NDVI layer from GIBS
+    const gibsUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_NDVI/default/{time}/{z}/{x}/{y}.png';
+    const ndviLayer = L.tileLayer(gibsUrl, {
+        attribution: '© NASA GIBS, MODIS Terra',
+        tileSize: 256,
+        maxZoom: 8,
+        minZoom: 1,
+        time: '2024-05-01' // Use a past date with available data
     }).addTo(map);
 
     // Update timeline display
@@ -10,59 +17,61 @@ document.addEventListener('DOMContentLoaded', () => {
     const yearDisplay = document.getElementById('selected-year');
     slider.addEventListener('input', () => {
         yearDisplay.textContent = slider.value;
-        // Later: Use this to filter data by year
+        const newDate = `${slider.value}-05-01`;
+        map.eachLayer(layer => {
+            if (layer.options.time) {
+                layer.options.time = newDate;
+                layer.redraw(); // Refresh the layer with new time
+            }
+        });
     });
 
-    // Search button (placeholder for now)
+    // Search button with geocoding
     const searchBtn = document.getElementById('search-btn');
     searchBtn.addEventListener('click', () => {
         const location = document.getElementById('location-search').value;
-        alert(`Searching for blooms in: ${location}`); // Replace with real search later
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`, {
+            headers: { 'User-Agent': 'BloomWatch/1.0[](https://yourdomain.com)' } // Add user agent
+        })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.length > 0) {
+                    const { lat, lon } = data[0];
+                    map.setView([lat, lon], 10);
+                    fetchBloomData(lat, lon, slider.value);
+                } else {
+                    alert('Location not found. Try a more specific name (e.g., "Rio de Janeiro").');
+                }
+            })
+            .catch(error => {
+                console.error('Geocoding error:', error);
+                alert('Error searching location. Check console for details.');
+            });
     });
 
-    // Info panel update (example on map click)
+    // Info panel update on map click
     map.on('click', (e) => {
-        const infoPanel = document.getElementById('bloom-info');
-        infoPanel.textContent = `Clicked at latitude: ${e.latlng.lat}, longitude: ${e.latlng.lng}. Loading bloom data...`;
-        // Later: Fetch NASA data for this location
+        const year = slider.value;
+        fetchBloomData(e.latlng.lat, e.latlng.lng, year);
     });
-    // Example: Fetch NASA imagery (replace DEMO_KEY with your key)
-function fetchBloomData(lat, lon, year) {
-    const apiKey = 'ZktDK0NIj2638lKwYDes68EbPyHZUbr4AL1Lkn7Q';
-    const date = `${year}-05-01`;
-    const url = `https://api.nasa.gov/planetary/earth/imagery?lon=${lon}&lat=${lat}&date=${date}&dim=0.1&api_key=${apiKey}`;
-    
-    // Log URL for debugging
-    console.log('Fetching URL:', url);
-    
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            const infoPanel = document.getElementById('bloom-info');
-            console.log('API Response:', data); // Log response for debugging
-            if (data.url) {
-                infoPanel.innerHTML = `<p>Bloom imagery for ${year}:</p><img src="${data.url}" alt="NASA Bloom Image" style="max-width:100%;">`;
-                // Uncomment to overlay on map
-                // L.imageOverlay(data.url, [[lat-0.05, lon-0.05], [lat+0.05, lon+0.05]]).addTo(map);
-            } else {
-                infoPanel.textContent = 'No imagery found. Try another location or date.';
-            }
-        })
-        .catch(error => {
-            const infoPanel = document.getElementById('bloom-info');
-            infoPanel.textContent = `Error fetching data: ${error.message}`;
-            console.error('Fetch Error:', error);
-        });
-}
 
-// Call it on map click
-map.on('click', (e) => {
-    const year = slider.value;
-    fetchBloomData(e.latlng.lat, e.latlng.lng, year);
-});
+    // Fetch bloom data (mock NDVI for now)
+    function fetchBloomData(lat, lon, year) {
+        const infoPanel = document.getElementById('bloom-info');
+        infoPanel.innerHTML = `Analyzing blooms at (${lat.toFixed(2)}, ${lon.toFixed(2)}) for ${year}...`;
+        // Add marker
+        L.marker([lat, lon]).addTo(map)
+            .bindPopup(`Location: (${lat.toFixed(2)}, ${lon.toFixed(2)})<br>Year: ${year}`)
+            .openPopup();
+        // Mock NDVI
+        const ndvi = Math.random() * 0.8 + 0.2;
+        if (ndvi > 0.4) {
+            infoPanel.innerHTML += `<p><strong>Bloom detected!</strong> NDVI: ${ndvi.toFixed(2)} (High vegetation activity).</p>`;
+        } else {
+            infoPanel.innerHTML += `<p>No significant bloom. NDVI: ${ndvi.toFixed(2)}.</p>`;
+        }
+    }
 });

@@ -1,5 +1,47 @@
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-header { background: #003366; color: white; padding: 10px; text-align: center; }
-#map-container { height: 400px; width: 100%; }  /* Placeholder for map */
-#timeline { margin: 20px; }
-#info-panel { padding: 20px; border: 1px solid #ccc; }
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
+}
+header {
+    background: #003366;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+#controls {
+    padding: 10px;
+    text-align: center;
+}
+#map-container {
+    height: 500px; /* Ensure sufficient height */
+    width: 100%;
+    border: 1px solid #ccc;
+}
+#timeline {
+    margin: 20px;
+    text-align: center;
+}
+#info-panel {
+    padding: 20px;
+    background: white;
+    border: 1px solid #ccc;
+    margin: 20px;
+}
+#bloom-info {
+    background: #e6f3e6; /* Light green for bloom theme */
+    padding: 15px;
+    border-radius: 8px;
+}
+button {
+    background: #003366;
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+}
+input {
+    padding: 10px;
+    margin-right: 10px;
+}
