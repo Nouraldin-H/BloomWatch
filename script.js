@@ -1,3 +1,10 @@
+// Global variables to make date and GIBS matrix parameters flexible
+let date = "2025-04-15"; // Default
+let matrixSet = "250m";
+let matrix = 3;
+let row = 1;
+let col = 2;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize the map
     const map = L.map('map-container').setView([0, 0], 2);
@@ -9,13 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }).addTo(map);
 
     // Add MODIS NDVI layer from GIBS (overlay)
+    // Use regular curly braces in URL, not `` and ${}, for Leaflet
     const gibsUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_NDVI/default/{time}/{z}/{x}/{y}.png';
     const ndviLayer = L.tileLayer(gibsUrl, {
         attribution: '© NASA GIBS, MODIS Terra',
         tileSize: 256,
         maxZoom: 8,
         minZoom: 1,
-        time: '2025-04-15',
+        time: date, // Use global variable here
         opacity: 0.8,
         errorTileUrl: '',
         noWrap: true
@@ -31,26 +39,24 @@ document.addEventListener('DOMContentLoaded', () => {
     L.control.layers(baseLayers, overlayLayers).addTo(map);
     ndviLayer.addTo(map); // Add NDVI by default
 
-    // Log tile errors for debugging
+    // Log tile errors for debugging (fix for undefined tile)
     ndviLayer.on('tileerror', (error, tile) => {
-        console.error('Tile error:', error, 'for tile:', tile.src);
-        // Optional: Notify user if appropriate
-        // alert('NDVI data not available. Check console.');
+        console.error('Tile error:', error, 'for tile:', tile && tile.src ? tile.src : 'unknown');
     });
 
     // Marker layer group to manage pins
     const markerGroup = L.layerGroup().addTo(map);
 
-    // Update timeline display with NDVI sync
+    // Update timeline display with NDVI sync (for days, use <input type="date"> in HTML!)
     const slider = document.getElementById('date-slider');
-    const yearDisplay = document.getElementById('selected-year');
+    const dateDisplay = document.getElementById('selected-date');
     slider.addEventListener('input', () => {
-        yearDisplay.textContent = slider.value;
-        const newDate = `${slider.value}-05-01`;
+        dateDisplay.textContent = slider.value;
+        date = slider.value; // Update global date variable
         if (ndviLayer.setParams) {
-            ndviLayer.setParams({ time: newDate });
+            ndviLayer.setParams({ time: date });
         }
-        console.log('Updated NDVI date to:', newDate);
+        console.log('Updated NDVI date to:', date);
     });
 
     // Search button with geocoding
@@ -67,10 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 console.log('Geocoding results:', data);
-                if (data.length >= 0) {
+                if (data.length > 0) {
                     const { lat, lon } = data[0];
                     map.setView([lat, lon], 5);
-                    fetchBloomData(lat, lon, slider.value);
+                    fetchBloomData(lat, lon, date);
                 } else {
                     alert('Location not found. Try "Brazil country" or "Rio de Janeiro".');
                 }
@@ -85,30 +91,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Info panel update on map click
     map.on('click', (e) => {
-        const year = slider.value;
-        fetchBloomData(e.latlng.lat, e.latlng.lng, year);
+        fetchBloomData(e.latlng.lat, e.latlng.lng, date);
     });
 
     // Fetch bloom data (real NASA API integration)
-    function fetchBloomData(lat, lon, year) {
+    function fetchBloomData(lat, lon, date) {
         const infoPanel = document.getElementById('bloom-info');
         // Clear previous content
         infoPanel.innerHTML = '';
-
         // Set initial content
-        infoPanel.innerHTML = `Analyzing blooms at (${lat.toFixed(2)}, ${lon.toFixed(2)}) for ${year} ...<br>`;
-
+        infoPanel.innerHTML = `Analyzing blooms at (${lat.toFixed(2)}, ${lon.toFixed(2)}) for ${date} ...<br>`;
         // Clear old markers
         markerGroup.clearLayers();
-
         // Add new marker
         const marker = L.marker([lat, lon]).addTo(markerGroup)
-            .bindPopup(`Location: (${lat.toFixed(2)}, ${lon.toFixed(2)})<br>Year: ${year}`)
+            .bindPopup(`Location: (${lat.toFixed(2)}, ${lon.toFixed(2)})<br>Date: ${date}`)
             .openPopup();
 
         // NASA API key
-        const apiKey = 'ZktDK0NIj2638lKwYDes68EbPyHZUbr4AL1Lkn7Q';
-        const date = `${year}-05-01`;
+        const apiKey = 'uIiHd7Fm0KeAVeMbVh5MUCQuNJk4Hs9wETszzwXO';
         const apiUrl = `https://api.nasa.gov/planetary/earth/imagery?lon=${lon}&lat=${lat}&date=${date}&dim=0.1&api_key=${apiKey}`;
 
         fetch(apiUrl)
@@ -118,17 +119,18 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 if (data.url) {
-                    // Display imagery
                     infoPanel.innerHTML += `<p><img src="${data.url}" alt="NASA Satellite Image" style="max-width:100%; height:auto;"></p>`;
-                    // Since real NDVI is not parsed here, don't simulate a bloom detection.
                     infoPanel.innerHTML += `<p>Satellite imagery provided. Data is not available for this spot and date.</p>`;
                 } else {
-                    infoPanel.innerHTML += `<p>No imagery available for this location/date.</p>`;
+                    infoPanel.innerHTML += `<p>bloom data not available for this location/date.</p>`;
                 }
             })
             .catch(error => {
                 console.error('NASA API error:', error);
-                infoPanel.innerHTML += `<p>bloom data not available for this location/year.</p>`;
+                if (!infoPanel.innerHTML.includes('bloom data not available')) {
+                    infoPanel.innerHTML += `<p>bloom data not available for this location/date.</p>`;
+                }
             });
     }
 });
+
