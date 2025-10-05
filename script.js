@@ -8,24 +8,24 @@ document.addEventListener('DOMContentLoaded', () => {
         maxZoom: 19
     }).addTo(map);
 
-    let time = "2024-05-01";
-    let z = 3;
-    let y = 1;
-    let x = 2;
- 
-
     // Add MODIS NDVI layer from GIBS (overlay)
-    const gibsUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_NDVI/default/${time}/${z}/${x}/${y}.png`;
+    const gibsUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_NDVI/default/{time}/{z}/{x}/{y}.png';
     const ndviLayer = L.tileLayer(gibsUrl, {
         attribution: '© NASA GIBS, MODIS Terra',
         tileSize: 256,
         maxZoom: 8,
-        minZoom: 1,
-        time: '2024-05-01',
-        opacity: 0.7,
-        errorTileUrl: '',
+        minZoom: 1, // Match initial zoom to allow loading
+        time: '2023-05-01', // Use a date with confirmed data
+        opacity: 0.8, // Increased for visibility
+        errorTileUrl: '', // Hide broken tiles
         noWrap: true
     }).addTo(map);
+
+    // Log tile errors for debugging with fallback message
+    ndviLayer.on('tileerror', (error, tile) => {
+        console.error('Tile error:', error, 'for tile:', tile.src);
+        alert('NDVI data not available for this date/region. Using OSM base layer. Check console for details.');
+    });
 
     // Marker layer group to manage pins
     const markerGroup = L.layerGroup().addTo(map);
@@ -46,27 +46,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const location = document.getElementById('location-search').value;
         console.log('Searching for:', location);
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`, {
-            headers: { 'User-Agent': 'BloomWatch/1.0[](https://github.com/your-repo)' }
+            headers: { 'User-Agent': 'BloomWatch/1.0[](https://github.com/Nouraldin-H/BloomWatch/tree/master)' } // Fixed syntax
         })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 return response.json();
             })
             .then(data => {
                 console.log('Geocoding results:', data);
                 if (data.length > 0) {
                     const { lat, lon } = data[0];
-                    map.setView([lat, lon], 5); // Zoom to location
-                    fetchBloomData(lat, lon, slider.value); // Update info panel
+                    map.setView([lat, lon], 5);
+                    fetchBloomData(lat, lon, slider.value);
                 } else {
                     alert('Location not found. Try "Brazil country" or "Rio de Janeiro".');
                 }
             })
             .catch(error => {
-                console.error('Geocoding error:', error); // Log error, no alert
-                // Only alert if it's a critical failure (e.g., network down)
+                console.error('Geocoding error:', error);
                 if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
                     alert('Network error. Check your connection or try again.');
                 }
@@ -79,10 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchBloomData(e.latlng.lat, e.latlng.lng, year);
     });
 
-    // Fetch bloom data (mock NDVI)
+    // Fetch bloom data (mock NDVI, placeholder for team API data)
     function fetchBloomData(lat, lon, year) {
         const infoPanel = document.getElementById('bloom-info');
-        infoPanel.innerHTML = `Analyzing blooms at (${lat.toFixed(2)}, ${lon.toFixed(2)}) for ${year}...`;
+        infoPanel.innerHTML = `Analyzing blooms at (${lat.toFixed(2)}, ${lon.toFixed(2)}) for ${year} ...<br>`;
         
         // Clear old markers
         markerGroup.clearLayers();
@@ -92,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .bindPopup(`Location: (${lat.toFixed(2)}, ${lon.toFixed(2)})<br>Year: ${year}`)
             .openPopup();
         
-        // Mock NDVI
         const ndvi = Math.random() * 0.8 + 0.2;
         if (ndvi > 0.4) {
             infoPanel.innerHTML += `<p><strong>Bloom detected!</strong> NDVI: ${ndvi.toFixed(2)} (High vegetation activity).</p>`;

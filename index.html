@@ -10,22 +10,22 @@
 <body>
     <header>
         <h1>BloomWatch: Explore the planet by tracking blooms!</h1>
-        <p>Monitor plant blooms using NASA data</p>
+        <p>Monitor plant blooms using NASA Earth Data</p>
     </header>
     <main>
         <section id="controls">
-            <input type="text" id="location-search" placeholder="Search location (e.g., New York)">
+            <input type="text" id="location-search" placeholder="Search location...">
             <button id="search-btn">Search</button>
         </section>
         <div id="map-container"></div>
         <section id="timeline">
-            <label for="date-slider">Select Date Range:</label>
-            <input type="range" id="date-slider" min="2020" max="2025" value="2025">
+            <label for="date-slider">Date Range:</label>
+            <input type="range" id="date-slider" min="2020" max="2025" value="2025" step="1">
             <span id="selected-year">2025</span>
         </section>
         <section id="info-panel">
-            <h2>Bloom Details</h2>
-            <p id="bloom-info">Click on the map for details...</p>
+            <h2>Bloom Details:</h2>
+            <p id="bloom-info">Click on the map for bloom details...</p>
         </section>
     </main>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
