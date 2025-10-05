@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tileSize: 256,
         maxZoom: 8,
         minZoom: 1,
-        time: '2019-05-01',
+        time: '2025-04-15',
         opacity: 0.8,
         errorTileUrl: '',
         noWrap: true
