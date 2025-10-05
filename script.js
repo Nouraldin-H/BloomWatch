@@ -2,15 +2,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the map
     const map = L.map('map-container').setView([0, 0], 2);
 
-    // Add MODIS NDVI layer from GIBS
+    // Fallback base layer (OpenStreetMap)
+    const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Add MODIS NDVI layer from GIBS (overlay)
     const gibsUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_NDVI/default/{time}/{z}/{x}/{y}.png';
     const ndviLayer = L.tileLayer(gibsUrl, {
         attribution: '© NASA GIBS, MODIS Terra',
         tileSize: 256,
         maxZoom: 8,
         minZoom: 1,
-        time: '2024-05-01' // Use a past date with available data
+        time: '2024-05-01',
+        opacity: 0.7,
+        errorTileUrl: '',
+        noWrap: true
     }).addTo(map);
+
+    // Marker layer group to manage pins
+    const markerGroup = L.layerGroup().addTo(map);
 
     // Update timeline display
     const slider = document.getElementById('date-slider');
@@ -18,37 +30,40 @@ document.addEventListener('DOMContentLoaded', () => {
     slider.addEventListener('input', () => {
         yearDisplay.textContent = slider.value;
         const newDate = `${slider.value}-05-01`;
-        map.eachLayer(layer => {
-            if (layer.options.time) {
-                layer.options.time = newDate;
-                layer.redraw(); // Refresh the layer with new time
-            }
-        });
+        ndviLayer.setParams({ time: newDate });
+        console.log('Updated date to:', newDate);
     });
 
     // Search button with geocoding
     const searchBtn = document.getElementById('search-btn');
     searchBtn.addEventListener('click', () => {
         const location = document.getElementById('location-search').value;
+        console.log('Searching for:', location);
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`, {
-            headers: { 'User-Agent': 'BloomWatch/1.0[](https://yourdomain.com)' } // Add user agent
+            headers: { 'User-Agent': 'BloomWatch/1.0[](https://github.com/your-repo)' }
         })
             .then(response => {
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
                 return response.json();
             })
             .then(data => {
+                console.log('Geocoding results:', data);
                 if (data.length > 0) {
                     const { lat, lon } = data[0];
-                    map.setView([lat, lon], 10);
-                    fetchBloomData(lat, lon, slider.value);
+                    map.setView([lat, lon], 5); // Zoom to location
+                    fetchBloomData(lat, lon, slider.value); // Update info panel
                 } else {
-                    alert('Location not found. Try a more specific name (e.g., "Rio de Janeiro").');
+                    alert('Location not found. Try "Brazil country" or "Rio de Janeiro".');
                 }
             })
             .catch(error => {
-                console.error('Geocoding error:', error);
-                alert('Error searching location. Check console for details.');
+                console.error('Geocoding error:', error); // Log error, no alert
+                // Only alert if it's a critical failure (e.g., network down)
+                if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
+                    alert('Network error. Check your connection or try again.');
+                }
             });
     });
 
@@ -58,14 +73,19 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchBloomData(e.latlng.lat, e.latlng.lng, year);
     });
 
-    // Fetch bloom data (mock NDVI for now)
+    // Fetch bloom data (mock NDVI)
     function fetchBloomData(lat, lon, year) {
         const infoPanel = document.getElementById('bloom-info');
         infoPanel.innerHTML = `Analyzing blooms at (${lat.toFixed(2)}, ${lon.toFixed(2)}) for ${year}...`;
-        // Add marker
-        L.marker([lat, lon]).addTo(map)
+        
+        // Clear old markers
+        markerGroup.clearLayers();
+        
+        // Add new marker
+        const marker = L.marker([lat, lon]).addTo(markerGroup)
             .bindPopup(`Location: (${lat.toFixed(2)}, ${lon.toFixed(2)})<br>Year: ${year}`)
             .openPopup();
+        
         // Mock NDVI
         const ndvi = Math.random() * 0.8 + 0.2;
         if (ndvi > 0.4) {
