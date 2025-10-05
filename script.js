@@ -8,8 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
         maxZoom: 19
     }).addTo(map);
 
+    let time = "2024-05-01";
+    let z = 3;
+    let y = 1;
+    let x = 2;
+ 
+
     // Add MODIS NDVI layer from GIBS (overlay)
-    const gibsUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_NDVI/default/{time}/{z}/{x}/{y}.png';
+    const gibsUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_NDVI/default/${time}/${z}/${x}/${y}.png`;
     const ndviLayer = L.tileLayer(gibsUrl, {
         attribution: '© NASA GIBS, MODIS Terra',
         tileSize: 256,
